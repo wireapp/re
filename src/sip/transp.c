@@ -701,6 +701,7 @@ static void websock_recv_handler(const struct websock_hdr *hdr,
 	struct sip_conn *conn = arg;
 	struct sip_msg *msg;
 	int err;
+	(void)hdr;
 
 #if 0
 	re_printf(
