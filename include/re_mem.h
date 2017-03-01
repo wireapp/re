@@ -23,9 +23,18 @@ struct memstat {
 	size_t size_max;     /**< Largest block size allocated */
 };
 
-void    *mem_alloc(size_t size, mem_destroy_h *dh);
-void    *mem_zalloc(size_t size, mem_destroy_h *dh);
-void    *mem_realloc(void *data, size_t size);
+#define mem_alloc(s, d) \
+	mem_alloc_rl(s, d, __FILE__, __LINE__)
+
+#define mem_zalloc(s, d) \
+	mem_zalloc_rl(s, d, __FILE__, __LINE__)
+
+#define mem_realloc(s, d) \
+	mem_realloc_rl(s, d, __FILE__, __LINE__)
+
+void    *mem_alloc_rl(size_t size, mem_destroy_h *dh, const char *f, int l);
+void    *mem_zalloc_rl(size_t size, mem_destroy_h *dh, const char *f, int l);
+void    *mem_realloc_rl(void *data, size_t size, const char *f, int l);
 void    *mem_reallocarray(void *ptr, size_t nmemb,
 			  size_t membsize, mem_destroy_h *dh);
 void    *mem_ref(void *data);

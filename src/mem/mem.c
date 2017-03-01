@@ -34,6 +34,8 @@ struct mem {
 	struct le le;       /**< Linked list element   */
 	uint32_t magic;     /**< Magic number          */
 	size_t size;        /**< Size of memory object */
+	char file[256];
+	int line;
 #endif
 };
 
@@ -123,7 +125,7 @@ static inline void mem_unlock(void)
  *
  * @return Pointer to allocated object
  */
-void *mem_alloc(size_t size, mem_destroy_h *dh)
+void *mem_alloc_rl(size_t size, mem_destroy_h *dh, const char *f, int l)
 {
 	struct mem *m;
 
@@ -144,6 +146,8 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 	memset(&m->le, 0, sizeof(struct le));
 	mem_lock();
 	list_append(&meml, &m->le, m);
+	snprintf(m->file, sizeof(m->file), "%s", f);
+	m->line = l;
 	mem_unlock();
 #endif
 
@@ -164,11 +168,11 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
  *
  * @return Pointer to allocated object
  */
-void *mem_zalloc(size_t size, mem_destroy_h *dh)
+void *mem_zalloc_rl(size_t size, mem_destroy_h *dh, const char *f, int l)
 {
 	void *p;
 
-	p = mem_alloc(size, dh);
+	p = mem_alloc_rl(size, dh, f, l);
 	if (!p)
 		return NULL;
 
@@ -188,7 +192,7 @@ void *mem_zalloc(size_t size, mem_destroy_h *dh)
  *
  * @note Realloc NULL pointer is not supported
  */
-void *mem_realloc(void *data, size_t size)
+void *mem_realloc_rl(void *data, size_t size, const char *f, int l)
 {
 	struct mem *m, *m2;
 
@@ -366,7 +370,8 @@ static bool debug_handler(struct le *le, void *arg)
 
 	(void)arg;
 
-	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p, m->nrefs);
+	(void)re_fprintf(stderr, "  %p<%s:%d>: nrefs=%-2u",
+			 p, m->file, m->line, m->nrefs);
 
 	(void)re_fprintf(stderr, " size=%-7u", m->size);
 
