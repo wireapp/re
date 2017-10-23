@@ -405,6 +405,14 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 				conn_close(tc, ECONNRESET);
 				return;
 
+			case SSL_ERROR_SYSCALL:
+				err = errno;
+				DEBUG_WARNING("read error: SYSCALL (%m)\n",
+					      err);
+				tls_flush_error();
+				conn_close(tc, err ? err : EPROTO);
+				return;
+
 			default:
 				DEBUG_WARNING("read error: %i\n", ssl_err);
 				conn_close(tc, EPROTO);
