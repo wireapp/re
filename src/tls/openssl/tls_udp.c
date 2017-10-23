@@ -394,7 +394,9 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 		if (n <= 0) {
 			const int ssl_err = SSL_get_error(tc->ssl, n);
 
-			ERR_clear_error();
+			if (SSL_ERROR_SYSCALL != ssl_err) {
+				ERR_clear_error();
+			}
 
 			switch (ssl_err) {
 
