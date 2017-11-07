@@ -237,7 +237,7 @@ ifeq ($(OS),linux)
 	MOD_LFLAGS	+=
 	APP_LFLAGS	+= -rdynamic
 	AR		:= ar
-	AFLAGS		:= cru
+	AFLAGS		:= crD
 endif
 ifeq ($(OS),gnu)
 	CFLAGS		+= -fPIC -DGNU
@@ -749,7 +749,8 @@ deb:
 debclean:
 	@rm -rf build-stamp configure-stamp debian/files debian/$(PROJECT) \
 		debian/lib$(PROJECT) debian/lib$(PROJECT)-dev debian/tmp \
-		debian/*.debhelper debian/*.debhelper.log debian/*.substvars
+		debian/.debhelper debian/*.debhelper debian/*.debhelper.log \
+		debian/*.substvars
 
 # RPM
 RPM := $(shell [ -d /usr/src/rpm ] 2>/dev/null && echo "rpm")
