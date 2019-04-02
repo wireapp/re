@@ -40,6 +40,7 @@
 #include <re_mbuf.h>
 #include <re_list.h>
 #include <re_tmr.h>
+#include <re_mqueue.h>
 #include <re_main.h>
 #include "main.h"
 #ifdef HAVE_PTHREAD
@@ -998,6 +999,17 @@ int re_main(re_signal_h *signalh)
 	re->polling = false;
 
 	return err;
+}
+
+
+int re_poll(void)
+{
+	struct re *re = re_get();
+
+	tmr_poll(&re->tmrl);
+	mqueue_poll();
+
+	return 0;
 }
 
 

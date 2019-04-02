@@ -29,13 +29,14 @@ int libre_init(void)
 		goto out;
 #endif
 
-	err = net_sock_init();
+	//err = net_sock_init();
+	err = 0;
 	if (err)
 		goto out;
 
  out:
 	if (err) {
-		net_sock_close();
+	//net_sock_close();
 #ifdef USE_OPENSSL
 		openssl_close();
 #endif

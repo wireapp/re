@@ -44,6 +44,8 @@ int   re_main(re_signal_h *signalh);
 void  re_cancel(void);
 int   re_debug(struct re_printf *pf, void *unused);
 
+int re_poll(void);
+
 int  re_thread_init(void);
 void re_thread_close(void);
 void re_thread_enter(void);
