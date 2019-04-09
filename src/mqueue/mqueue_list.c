@@ -97,11 +97,7 @@ int mqueue_alloc(struct mqueue **mqp, mqueue_h *h, void *arg)
 
 	list_append(&g_mql, &mq->le, mq);
 	
- out:
-	if (err)
-		mem_deref(mq);
-	else
-		*mqp = mq;
+	*mqp = mq;
 
 	return err;
 }
@@ -123,10 +119,14 @@ int mqueue_push(struct mqueue *mq, int id, void *data)
 	if (!mq)
 		return EINVAL;
 
+	if (mq->h)
+		mq->h(id, data, mq->arg);
+
 	msg = mem_zalloc(sizeof(*msg), msg_destructor);
 	if (!msg)
 		return ENOMEM;
-	
+
+#if 0	
 	msg->id    = id;
 	msg->data  = data;
 	msg->magic = MAGIC;
@@ -134,12 +134,16 @@ int mqueue_push(struct mqueue *mq, int id, void *data)
 	//lock_write_get(mq->lock);
 	list_append(&mq->evl, &msg->le, msg);
 	//lock_rel(mq->lock);
+#else
+	mem_deref(msg);
+#endif
+	
 	
 	return 0;
 }
 
 
-int poll_mqueue(struct mqueue *mq)
+static int poll_mqueue(struct mqueue *mq)
 {
 	struct msg *msg = NULL;
 
@@ -177,5 +181,6 @@ int mqueue_poll(void)
 
 		poll_mqueue(mq);
 	}
-		
+
+	return 0;
 }
