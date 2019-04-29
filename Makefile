@@ -22,18 +22,18 @@ MODULES += uri http httpauth msg websock
 MODULES += stun turn ice
 MODULES += natbd
 MODULES += rtp sdp jbuf telev
-#MODULES += dns
 MODULES += md5 crc32 sha hmac base64
-MODULES += sa
-#MODULES += net udp tcp tls
 MODULES += list mbuf hash
-MODULES += fmt tmr mem dbg sys lock mqueue
-MODULES += main
+MODULES += fmt tmr main mem dbg sys lock mqueue
 MODULES += mod conf
 MODULES += bfcp
 MODULES += aes srtp
 MODULES += odict
 MODULES += json
+
+ifeq ($(DISABLE_NETWORK_MODULES),)
+MODULES += net udp tcp tls dns
+endif
 
 INSTALL := install
 ifeq ($(DESTDIR),)
