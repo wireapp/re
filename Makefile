@@ -32,7 +32,7 @@ MODULES += odict
 MODULES += json
 
 ifeq ($(DISABLE_NETWORK_MODULES),)
-MODULES += net udp tcp tls dns
+MODULES += net sa udp tcp tls dns
 endif
 
 INSTALL := install
