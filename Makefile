@@ -19,7 +19,7 @@ include $(MK)
 # List of modules
 MODULES += sip sipevent sipreg sipsess
 MODULES += uri http httpauth msg websock
-MODULES += stun turn ice
+MODULES += stun turn ice sa
 MODULES += natbd
 MODULES += rtp sdp jbuf telev
 MODULES += md5 crc32 sha hmac base64
@@ -32,7 +32,7 @@ MODULES += odict
 MODULES += json
 
 ifeq ($(DISABLE_NETWORK_MODULES),)
-MODULES += net sa udp tcp tls dns
+MODULES += net udp tcp tls dns
 endif
 
 INSTALL := install
