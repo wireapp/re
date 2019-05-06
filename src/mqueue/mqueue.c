@@ -166,3 +166,8 @@ int mqueue_push(struct mqueue *mq, int id, void *data)
 
 	return (n != sizeof(msg)) ? EPIPE : 0;
 }
+
+int mqueue_poll(void)
+{
+}
+

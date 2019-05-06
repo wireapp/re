@@ -6,8 +6,9 @@
 
 ifeq ($(OS),wasm)
 SRCS	+= mqueue/mqueue_list.c
+else
+SRCS	+= mqueue/mqueue.c
 endif
-SRCS	+= mqueue/mqueue_list.c
 
 ifeq ($(OS),win32)
 SRCS	+= mqueue/win32/pipe.c
