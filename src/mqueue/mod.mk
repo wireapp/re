@@ -4,7 +4,7 @@
 # Copyright (C) 2010 Creytiv.com
 #
 
-ifeq ($(OS),wasm)
+ifeq ($(USE_MQUEUE_BYPASS),1)
 SRCS	+= mqueue/mqueue_list.c
 else
 SRCS	+= mqueue/mqueue.c
