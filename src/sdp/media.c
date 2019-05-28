@@ -511,6 +511,14 @@ void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir)
 	m->ldir = dir;
 }
 
+void sdp_media_set_rdir(struct sdp_media *m, enum sdp_dir dir)
+{
+	if (!m)
+		return;
+
+	m->rdir = dir;
+}
+
 
 /**
  * Set a local attribute of an SDP Media line
