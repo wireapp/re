@@ -26,5 +26,6 @@ int srtp_encrypt(struct srtp *srtp, struct mbuf *mb);
 int srtp_decrypt(struct srtp *srtp, struct mbuf *mb);
 int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb);
 int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb);
+int srtp_remove_stream(struct srtp *srtp, uint32_t ssrc);
 
 const char *srtp_suite_name(enum srtp_suite suite);
