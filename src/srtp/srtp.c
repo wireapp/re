@@ -428,3 +428,18 @@ int srtp_decrypt(struct srtp *srtp, struct mbuf *mb)
 
 	return 0;
 }
+
+int srtp_remove_stream(struct srtp *srtp, uint32_t ssrc)
+{
+	struct srtp_stream *strm;
+
+	if (!srtp)
+		return EINVAL;
+
+	strm = stream_find(srtp, ssrc);
+	if (!strm)
+		return ENOENT;
+
+	mem_deref(strm);
+	return 0;
+}

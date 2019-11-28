@@ -51,6 +51,7 @@ struct srtp {
 };
 
 
+struct srtp_stream *stream_find(struct srtp *srtp, uint32_t ssrc);
 int stream_get(struct srtp_stream **strmp, struct srtp *srtp, uint32_t ssrc);
 int stream_get_seq(struct srtp_stream **strmp, struct srtp *srtp,
 		   uint32_t ssrc, uint16_t seq);

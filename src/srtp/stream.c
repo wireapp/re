@@ -14,7 +14,7 @@
 
 /** SRTP protocol values */
 #ifndef SRTP_MAX_STREAMS
-#define SRTP_MAX_STREAMS  (8)  /**< Maximum number of SRTP streams */
+#define SRTP_MAX_STREAMS  (2048)  /**< Maximum number of SRTP streams */
 #endif
 
 
@@ -26,7 +26,7 @@ static void stream_destructor(void *arg)
 }
 
 
-static struct srtp_stream *stream_find(struct srtp *srtp, uint32_t ssrc)
+struct srtp_stream *stream_find(struct srtp *srtp, uint32_t ssrc)
 {
 	struct le *le;
 
