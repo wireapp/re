@@ -42,6 +42,8 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 void tls_set_verify_client(struct tls *tls);
 int tls_set_srtp(struct tls *tls, const char *suites);
+int tls_set_min_proto_version(struct tls *tls, int version);
+int tls_set_max_proto_version(struct tls *tls, int version);
 int tls_fingerprint(const struct tls *tls, enum tls_fingerprint type,
 		    uint8_t *md, size_t size);
 

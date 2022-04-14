@@ -552,6 +552,49 @@ int tls_set_srtp(struct tls *tls, const char *suites)
 }
 
 
+/**
+ * Set minimum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Minimum version, e.g.: TLS1_2_VERSION
+ */
+int tls_set_min_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_min_proto_version(tls->ctx, version))
+		return 0;
+#else
+	(void) version;
+#endif
+	return EACCES;
+
+}
+
+
+/**
+ * Set maximum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Maximum version, e.g. TLS1_2_VERSION
+ */
+int tls_set_max_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_max_proto_version(tls->ctx, version))
+		return 0;
+#else
+	(void) version;
+#endif
+	return EACCES;
+}
+
+
 static int cert_fingerprint(X509 *cert, enum tls_fingerprint type,
 			    uint8_t *md, size_t size)
 {
