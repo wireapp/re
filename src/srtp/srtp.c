@@ -429,7 +429,7 @@ int srtp_decrypt(struct srtp *srtp, struct mbuf *mb)
 	return 0;
 }
 
-int srtp_remove_stream(struct srtp *srtp, uint32_t ssrc)
+int re_srtp_remove_stream(struct srtp *srtp, uint32_t ssrc)
 {
 	struct srtp_stream *strm;
 
