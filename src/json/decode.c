@@ -4,6 +4,7 @@
  * Copyright (C) 2010 - 2015 Creytiv.com
  */
 
+#include <stdint.h>
 #include <float.h>
 
 #include <re_types.h>
@@ -189,17 +190,21 @@ static int decode_value(struct json_value *val, const struct pl *pl)
 		err = re_sdprintf(&val->v.str, "%H", utf8_decode, &pls);
 		val->type = JSON_STRING;
 	}
-	else if (is_number(&dbl, &isfloat, pl)
-		 || dbl > (long double)INT64_MAX
-		 || dbl < (long double)INT64_MIN) {
+	else if (is_number(&dbl, &isfloat, pl)) {
 
 		if (isfloat) {
 			val->type  = JSON_DOUBLE;
 			val->v.dbl = dbl;
 		}
 		else {
-			val->type      = JSON_INT;
-			val->v.integer = dbl;
+			if (dbl > (long double)INT64_MAX
+			 || dbl < (long double)INT64_MIN) {
+				return EBADMSG;
+			}
+			else {
+				val->type      = JSON_INT;
+				val->v.integer = dbl;
+			}
 		}
 	}
 	else if (!pl_strcasecmp(pl, "false")) {
