@@ -16,6 +16,10 @@
 #include <re_json.h>
 
 
+#define MIN_LDBL_INT (-9007199254740991)
+#define MAX_LDBL_INT (9007199254740991)
+
+
 static inline long double mypower10(uint64_t e)
 {
 	long double p = 10, n = 1;
@@ -197,8 +201,8 @@ static int decode_value(struct json_value *val, const struct pl *pl)
 			val->v.dbl = dbl;
 		}
 		else {
-			if (dbl > (long double)INT64_MAX
-			 || dbl < (long double)INT64_MIN) {
+			if (dbl > (long double)MAX_LDBL_INT
+			 || dbl < (long double)MIN_LDBL_INT) {
 				return EBADMSG;
 			}
 			else {
