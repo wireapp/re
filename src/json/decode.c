@@ -4,6 +4,9 @@
  * Copyright (C) 2010 - 2015 Creytiv.com
  */
 
+#include <stdint.h>
+#include <float.h>
+
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
@@ -11,6 +14,10 @@
 #include <re_hash.h>
 #include <re_odict.h>
 #include <re_json.h>
+
+
+#define MIN_LDBL_INT (-9007199254740991)
+#define MAX_LDBL_INT (9007199254740991)
 
 
 static inline long double mypower10(uint64_t e)
@@ -66,7 +73,14 @@ static bool is_number(long double *d, bool *isfloat, const struct pl *pl)
 				return false;
 
 			exp = true;
-			e   = neg ? -v : v;
+
+			/* Prevent overflow when casting v to int64_t
+			 * LDBL_MAX_10_EXP is the max base-10 exponent
+			 */
+			if (v > LDBL_MAX_10_EXP)
+				return false;
+
+			e   = neg ? -(int64_t)v : (int64_t)v;
 			v   = 0;
 			mul = 1;
 			neg = false;
@@ -85,8 +99,27 @@ static bool is_number(long double *d, bool *isfloat, const struct pl *pl)
 			mul = 1;
 		}
 		else if ('0' <= ch && ch <= '9') {
-			v += mul * (ch - '0');
-			mul *= 10;
+			long double digit_val = (ch - '0');
+
+			/* Prevent mul * digit_val from overflowing */
+			if (digit_val > 0 && mul > (LDBL_MAX / digit_val))
+				return false;
+
+			long double added_value = mul * digit_val;
+
+			/* Prevent v + added_value from overflowing */
+			if (v > LDBL_MAX - added_value)
+				return false;
+
+			v += added_value;
+
+			/* Prevent mul *= 10 from overflowing on next iteration */
+			if (mul > LDBL_MAX / 10.0L) {
+				if (p > pl->p && *(p - 1) >= '0' && *(p - 1) <= '9') {
+					return false;
+				}
+			}
+			mul *= 10.0L;
 		}
 		else if (ch == '-') {
 			neg = true;
@@ -102,10 +135,25 @@ static bool is_number(long double *d, bool *isfloat, const struct pl *pl)
 	*isfloat = (frac || exp);
 
 	if (exp) {
-		if (e < 0)
+		if (e < 0) {
+			/* e is negative, so -e is positive */
+			if (-e > LDBL_MAX_10_EXP)
+				return false;
+			
 			v /= mypower10(-e);
-		else
-			v *= mypower10(e);
+		}
+		else {
+			if (e > LDBL_MAX_10_EXP)
+				return false;
+
+			long double p10 = mypower10(e);
+			
+			/* Prevent multiplication overflow */
+			if (v > 0 && p10 > (LDBL_MAX / v))
+				return false;
+
+			v *= p10;
+		}
 	}
 
 	if (neg)
@@ -153,8 +201,14 @@ static int decode_value(struct json_value *val, const struct pl *pl)
 			val->v.dbl = dbl;
 		}
 		else {
-			val->type      = JSON_INT;
-			val->v.integer = dbl;
+			if (dbl > (long double)MAX_LDBL_INT
+			 || dbl < (long double)MIN_LDBL_INT) {
+				return EBADMSG;
+			}
+			else {
+				val->type      = JSON_INT;
+				val->v.integer = dbl;
+			}
 		}
 	}
 	else if (!pl_strcasecmp(pl, "false")) {
