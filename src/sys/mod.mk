@@ -6,7 +6,9 @@
 
 SRCS	+= sys/daemon.c
 SRCS	+= sys/endian.c
-#SRCS	+= sys/fs.c
+ifneq ($(HAVE_FS),)
+SRCS	+= sys/fs.c
+endif
 SRCS	+= sys/rand.c
 SRCS	+= sys/sleep.c
 SRCS	+= sys/sys.c
