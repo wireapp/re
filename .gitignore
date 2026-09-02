@@ -1,3 +1,4 @@
+# Builds / Tests / Libs
 build*
 test
 test.c
@@ -9,3 +10,16 @@ libre.a
 libre.dylib
 libre.pc
 libre.so
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# IntelliJ / CLion
+.idea/
+*.iml
+*.iws
+*.ipr
