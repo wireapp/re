@@ -100,9 +100,13 @@ static int array_entry_handler(unsigned idx, const struct json_value *val,
 	return entry_add(o, index, val);
 }
 
+int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str, size_t len, unsigned maxdepth)
+{
+	return json_decode_odict_filter(op, hash_size, str, len, maxdepth, NULL);
+}
 
-int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str,
-		      size_t len, unsigned maxdepth)
+int json_decode_odict_filter(struct odict **op, uint32_t hash_size, const char *str, size_t len,
+								unsigned maxdepth, json_filter_h *filterh)
 {
 	struct odict *o;
 	int err;
@@ -114,8 +118,9 @@ int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str,
 	if (err)
 		return err;
 
-	err = json_decode(str, len, maxdepth, object_handler, array_handler,
-			  object_entry_handler, array_entry_handler, o);
+	err = json_decode_filter(str, len, maxdepth,object_handler,array_handler,
+							 object_entry_handler,array_entry_handler, filterh,o);
+
 	if (err)
 		mem_deref(o);
 	else

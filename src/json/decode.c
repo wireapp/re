@@ -234,8 +234,11 @@ static int decode_value(struct json_value *val, const struct pl *pl)
 }
 
 
-static int object_entry(const struct pl *pl_name, const struct pl *pl_val,
-			json_object_entry_h *oeh, void *arg)
+static int object_entry(const struct pl *pl_name,
+						const struct pl *pl_val,
+						json_object_entry_h *oeh,
+						json_filter_h *filterh,
+						void *arg)
 {
 	struct json_value val;
 	char *name;
@@ -244,6 +247,11 @@ static int object_entry(const struct pl *pl_name, const struct pl *pl_val,
 	err = decode_name(&name, pl_name);
 	if (err)
 		return err;
+
+	if (filterh && !filterh(name)) {
+		mem_deref(name);
+		return 0;
+	}
 
 	err = decode_value(&val, pl_val);
 	if (err)
@@ -341,7 +349,7 @@ static int _json_decode(const char **str, size_t *len,
 			unsigned depth, unsigned maxdepth,
 			json_object_h *oh, json_array_h *ah,
 			json_object_entry_h *oeh, json_array_entry_h *aeh,
-			void *arg)
+			json_filter_h *filterh, void *arg)
 {
 	bool esc = false, inquot = false, inobj = false, inarray = false;
 	struct pl name = PL_INIT, val = PL_INIT;
@@ -381,7 +389,7 @@ static int _json_decode(const char **str, size_t *len,
 				if (!name.p)
 					return EBADMSG;
 
-				err = object_entry(&name, &val, oeh, arg);
+				err = object_entry(&name, &val, oeh, filterh, arg);
 				if (err)
 					return err;
 			}
@@ -419,7 +427,7 @@ static int _json_decode(const char **str, size_t *len,
 
 				err = _json_decode(str, len, depth + 1,
 						   maxdepth, h.oh, h.ah,
-						   h.oeh, h.aeh, h.arg);
+						   h.oeh, h.aeh, filterh, h.arg);
 				if (err)
 					return err;
 
@@ -450,7 +458,7 @@ static int _json_decode(const char **str, size_t *len,
 
 				err = _json_decode(str, len, depth + 1,
 						   maxdepth, h.oh, h.ah,
-						   h.oeh, h.aeh, h.arg);
+						   h.oeh, h.aeh, filterh, h.arg);
 				if (err)
 					return err;
 
@@ -473,7 +481,7 @@ static int _json_decode(const char **str, size_t *len,
 			if (!name.p)
 				return EBADMSG;
 
-			return object_entry(&name, &val, oeh, arg);
+			return object_entry(&name, &val, oeh, filterh, arg);
 
 		case ']':
 			if (!inarray)
@@ -519,5 +527,17 @@ int json_decode(const char *str, size_t len, unsigned maxdepth,
 	if (!str)
 		return EINVAL;
 
-	return _json_decode(&str, &len, 0, maxdepth, oh, ah, oeh, aeh, arg);
+	return _json_decode(&str, &len, 0, maxdepth, oh, ah, oeh, aeh, NULL, arg);
+}
+
+int json_decode_filter(const char *str, size_t len, unsigned maxdepth,
+                       json_object_h *oh, json_array_h *ah,
+                       json_object_entry_h *oeh, json_array_entry_h *aeh,
+                       json_filter_h *filterh,
+                       void *arg)
+{
+	if (!str)
+		return EINVAL;
+
+	return _json_decode(&str, &len, 0, maxdepth, oh, ah, oeh, aeh, filterh, arg);
 }

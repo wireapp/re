@@ -32,6 +32,7 @@ typedef int (json_object_h)(const char *name, unsigned idx,
 			    struct json_handlers *h);
 typedef int (json_array_h)(const char *name, unsigned idx,
 			   struct json_handlers *h);
+typedef bool (json_filter_h)(const char *name);
 
 struct json_handlers {
 	json_object_h *oh;
@@ -44,7 +45,12 @@ struct json_handlers {
 int json_decode(const char *str, size_t len, unsigned maxdepth,
 		json_object_h *oh, json_array_h *ah,
 		json_object_entry_h *oeh, json_array_entry_h *aeh, void *arg);
+int json_decode_filter(const char *str, size_t len, unsigned maxdepth,
+						json_object_h *oh, json_array_h *ah, json_object_entry_h *oeh,
+						json_array_entry_h *aeh, json_filter_h *filterh,void *arg);
 
-int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str,
-		      size_t len, unsigned maxdepth);
+int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str, size_t len, unsigned maxdepth);
+int json_decode_odict_filter(struct odict **op, uint32_t hash_size,
+								const char *str, size_t len,
+								unsigned maxdepth, json_filter_h *filterh);
 int json_encode_odict(struct re_printf *pf, const struct odict *o);
