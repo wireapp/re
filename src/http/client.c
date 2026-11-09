@@ -439,9 +439,18 @@ static int conn_connect(struct http_req *req)
 #ifdef USE_TLS
 	if (req->secure) {
 
+		struct sa sa;
+
 		err = tls_start_tcp(&conn->sc, req->cli->tls, conn->tc, 0);
 		if (err)
 			goto out;
+
+		/* SNI must not be sent for IP address literals (RFC 6066) */
+		if (sa_set_str(&sa, req->host, 0)) {
+			err = tls_set_servername(conn->sc, req->host);
+			if (err)
+				goto out;
+		}
 	}
 #endif
 
