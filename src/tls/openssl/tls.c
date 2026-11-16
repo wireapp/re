@@ -557,6 +557,8 @@ int tls_set_srtp(struct tls *tls, const char *suites)
  *
  * @param tls     TLS Object
  * @param version Minimum version, e.g.: TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int tls_set_min_proto_version(struct tls *tls, int version)
 {
@@ -566,6 +568,8 @@ int tls_set_min_proto_version(struct tls *tls, int version)
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	if (SSL_CTX_set_min_proto_version(tls->ctx, version))
 		return 0;
+
+	ERR_clear_error();
 #else
 	(void) version;
 #endif
@@ -579,6 +583,8 @@ int tls_set_min_proto_version(struct tls *tls, int version)
  *
  * @param tls     TLS Object
  * @param version Maximum version, e.g. TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int tls_set_max_proto_version(struct tls *tls, int version)
 {
@@ -588,6 +594,8 @@ int tls_set_max_proto_version(struct tls *tls, int version)
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	if (SSL_CTX_set_max_proto_version(tls->ctx, version))
 		return 0;
+
+	ERR_clear_error();
 #else
 	(void) version;
 #endif
