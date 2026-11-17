@@ -21,6 +21,7 @@
 #include <re_sys.h>
 #include <re_tcp.h>
 #include <re_tls.h>
+#include <openssl/crypto.h>
 #include "tls.h"
 
 
@@ -839,6 +840,7 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 
 	if (1 != SSL_export_keying_material(tc->ssl, keymat, 2*size, label,
 					    strlen(label), NULL, 0, 0)) {
+		OPENSSL_cleanse(keymat, sizeof(keymat));
 		ERR_clear_error();
 		return ENOENT;
 	}
@@ -849,6 +851,7 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 	memcpy(srv_key,            p, key_size);  p += key_size;
 	memcpy(cli_key + key_size, p, salt_size); p += salt_size;
 	memcpy(srv_key + key_size, p, salt_size);
+	OPENSSL_cleanse(keymat, sizeof(keymat));
 
 	return 0;
 #else
