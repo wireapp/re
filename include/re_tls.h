@@ -42,6 +42,9 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 void tls_set_verify_client(struct tls *tls);
 int tls_set_srtp(struct tls *tls, const char *suites);
+int tls_set_min_proto_version(struct tls *tls, int version);
+int tls_set_max_proto_version(struct tls *tls, int version);
+int tls_set_groups(struct tls *tls, const char *groups);
 int tls_fingerprint(const struct tls *tls, enum tls_fingerprint type,
 		    uint8_t *md, size_t size);
 
@@ -53,6 +56,8 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 		     uint8_t *cli_key, size_t cli_key_size,
 		     uint8_t *srv_key, size_t srv_key_size);
 const char *tls_cipher_name(const struct tls_conn *tc);
+int tls_conn_version(const struct tls_conn *tc, int *version);
+int tls_conn_group(const struct tls_conn *tc, uint16_t *group);
 int tls_set_ciphers(struct tls *tls, const char *cipherv[], size_t count);
 int tls_set_servername(struct tls_conn *tc, const char *servername);
 

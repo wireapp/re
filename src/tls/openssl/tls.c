@@ -21,6 +21,7 @@
 #include <re_sys.h>
 #include <re_tcp.h>
 #include <re_tls.h>
+#include <openssl/crypto.h>
 #include "tls.h"
 
 
@@ -552,6 +553,80 @@ int tls_set_srtp(struct tls *tls, const char *suites)
 }
 
 
+/**
+ * Set minimum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Minimum version, e.g.: TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_min_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_min_proto_version(tls->ctx, version))
+		return 0;
+
+	ERR_clear_error();
+#else
+	(void) version;
+#endif
+	return EACCES;
+
+}
+
+
+/**
+ * Set maximum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Maximum version, e.g. TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_max_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_max_proto_version(tls->ctx, version))
+		return 0;
+
+	ERR_clear_error();
+#else
+	(void) version;
+#endif
+	return EACCES;
+}
+
+
+/**
+ * Set the key exchange groups to use for this TLS context
+ *
+ * @param tls    TLS Context
+ * @param groups Colon-separated group names, in order of preference,
+ *               e.g. "X25519MLKEM768:X25519:P-256"
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_groups(struct tls *tls, const char *groups)
+{
+	if (!tls || !str_isset(groups))
+		return EINVAL;
+
+	if (1 != SSL_CTX_set1_groups_list(tls->ctx, groups)) {
+		ERR_clear_error();
+		return ENOTSUP;
+	}
+
+	return 0;
+}
+
+
 static int cert_fingerprint(X509 *cert, enum tls_fingerprint type,
 			    uint8_t *md, size_t size)
 {
@@ -765,6 +840,7 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 
 	if (1 != SSL_export_keying_material(tc->ssl, keymat, 2*size, label,
 					    strlen(label), NULL, 0, 0)) {
+		OPENSSL_cleanse(keymat, sizeof(keymat));
 		ERR_clear_error();
 		return ENOENT;
 	}
@@ -775,6 +851,7 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 	memcpy(srv_key,            p, key_size);  p += key_size;
 	memcpy(cli_key + key_size, p, salt_size); p += salt_size;
 	memcpy(srv_key + key_size, p, salt_size);
+	OPENSSL_cleanse(keymat, sizeof(keymat));
 
 	return 0;
 #else
@@ -803,6 +880,89 @@ const char *tls_cipher_name(const struct tls_conn *tc)
 		return NULL;
 
 	return SSL_get_cipher_name(tc->ssl);
+}
+
+
+/**
+ * Get the protocol version of a TLS connection
+ *
+ * @param tc      TLS Connection
+ * @param version Returned version, e.g. DTLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_conn_version(const struct tls_conn *tc, int *version)
+{
+	if (!tc || !tc->ssl || !version)
+		return EINVAL;
+
+	*version = SSL_version(tc->ssl);
+
+	return 0;
+}
+
+
+/**
+ * Get the key exchange group of a TLS connection
+ *
+ * @param tc    TLS Connection
+ * @param group Returned TLS NamedGroup value, e.g. 0x11ec
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_conn_group(const struct tls_conn *tc, uint16_t *group)
+{
+#ifdef USE_BORINGSSL
+	uint16_t id;
+
+	if (!tc || !tc->ssl || !group)
+		return EINVAL;
+
+	id = SSL_get_group_id(tc->ssl);
+	if (!id)
+		return ENOENT;
+
+	*group = id;
+
+	return 0;
+#elif (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+	/* OpenSSL returns a NID, or the group ID for groups without one */
+	static const struct {
+		int nid;
+		uint16_t id;
+	} groupv[] = {
+		{NID_X9_62_prime256v1, 0x0017},
+		{NID_secp384r1,        0x0018},
+		{NID_secp521r1,        0x0019},
+		{NID_X25519,           0x001d},
+	};
+	size_t i;
+	int nid;
+
+	if (!tc || !tc->ssl || !group)
+		return EINVAL;
+
+	nid = (int)SSL_get_negotiated_group(tc->ssl);
+	/* PQ groups (e.g. X25519MLKEM768): group ID, TLS 1.3 only (no DTLS 1.3) */
+	if (nid & TLSEXT_nid_unknown) {
+		*group = (uint16_t)(nid & 0xffff);
+		return 0;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(groupv); i++) {
+		if (groupv[i].nid == nid) {
+			*group = groupv[i].id;
+			return 0;
+		}
+	}
+
+	return ENOENT;
+#else
+	(void)tc;
+	(void)group;
+
+	return ENOSYS;
+#endif
 }
 
 
