@@ -57,6 +57,8 @@ struct sip_conn {
 	struct sip *sip;
 	uint32_t ka_interval;
 	bool established;
+	bool ping_sent;      /**< CRLF keepalive ping awaiting a pong    */
+	bool pong_seen;      /**< Peer has answered a CRLF keepalive ping */
 };
 
 
@@ -225,8 +227,18 @@ static void conn_keepalive_handler(void *arg)
 		return;
 	}
 
-	tmr_start(&conn->tmr, TCP_KEEPALIVE_TIMEOUT * 1000,
-		  conn_tmr_handler, conn);
+	conn->ping_sent = true;
+
+	/* Only enforce the pong deadline (RFC 5626 4.4.1) once the peer
+	 * has shown that it answers pings. Registrars without outbound
+	 * support (e.g. Twilio) never pong; for them the ping only keeps
+	 * the NAT binding open and the idle timer keeps running.
+	 */
+	if (conn->pong_seen) {
+		tmr_start(&conn->tmr, TCP_KEEPALIVE_TIMEOUT * 1000,
+			  conn_tmr_handler, conn);
+	}
+
 	tmr_start(&conn->tmr_ka, sip_keepalive_wait(conn->ka_interval),
 		  conn_keepalive_handler, conn);
 }
@@ -379,6 +391,13 @@ static void tcp_recv_handler(struct mbuf *mb, void *arg)
 				err = tcp_send(conn->tc, &mbr);
 				if (err)
 					break;
+			}
+			else if (conn->ping_sent) {
+				/* single CRLF while a ping is outstanding:
+				 * pong to our keepalive ping
+				 */
+				conn->ping_sent = false;
+				conn->pong_seen = true;
 			}
 
 			if (mbuf_get_left(conn->mb))

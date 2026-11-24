@@ -126,8 +126,17 @@ static void keepalive_handler(int err, void *arg)
 static void start_outbound(struct sipreg *reg, const struct sip_msg *msg)
 {
 	const struct sip_hdr *flowtimer;
+	bool outbound;
 
-	if (!sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "outbound"))
+	outbound = sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "outbound");
+
+	/* Without registrar support for RFC 5626 outbound, still run
+	 * CRLF keepalives on connection-oriented transports to keep
+	 * NAT bindings open. The UDP keepalive (STUN) needs a
+	 * registrar that supports outbound, so skip it otherwise.
+	 */
+	if (!outbound &&
+	    msg->tp != SIP_TRANSP_TCP && msg->tp != SIP_TRANSP_TLS)
 		return;
 
 	flowtimer = sip_msg_hdr(msg, SIP_HDR_FLOW_TIMER);
